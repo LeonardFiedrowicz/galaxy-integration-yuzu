@@ -1,0 +1,12 @@
+{
+    "name": "Yuzu plugin",
+    "platform": "nswitch",
+    "guid": "b627be67-44e5-40f5-a482-6e52bf967ea1",
+    "version": "0.1",
+    "description": "Yuzu plugin",
+    "author": "Leonard",
+    "email": "fiedrowicz.leonard@gmail.com",
+    "url": "https://github.com/LeonardFiedrowicz/galaxy-integration-yuzu",
+    "update_url": "",
+    "script": "plugin.py"
+}
