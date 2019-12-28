@@ -1,6 +1,6 @@
 # Yuzu Plugin for GOG Galaxy 2.0
 
-Requires Yuzu to be installed. This implementation is a modification of the [Citra Plugin](https://github.com/j-selby/galaxy-integration-citra).
+Requires Yuzu to be installed. This implementation is a modification of the [Citra Plugin](https://github.com/j-selby/galaxy-integration-citra). Using [NX_Game_Info](https://github.com/garoxas/NX_Game_Info)
 
 ## Features
 
