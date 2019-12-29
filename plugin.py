@@ -255,7 +255,7 @@ class YuzuPlugin(Plugin):
             license_info = LicenseInfo(LicenseType.OtherUserLicense, None)
             owned_games.append(Game(game_id=game.game_id, game_title=game.game_title, dlcs=None,
                                     license_info=license_info))
-        logging.debug(owned_games)
+        #logging.debug(owned_games)
         return owned_games
 
     async def get_local_games(self):
@@ -315,17 +315,18 @@ def get_games(path):
     #logging.debug(game_list_lines)
     #logging.debug(len(game_list_lines))
     i = 5
+    #file_count = 1
     while i < len(game_list_lines)-21:
-        #logging.debug(str(i) + ": " + str(game_list_lines[i]))
-
-        if "Base" in game_list_lines[i+16]:
-            #logging.debug("Game found!")
+        if "Base" in game_list_lines[i+16] and len(game_list_lines[i+21]) < 10:      # Check if its a base game and if error line is empty
+            logging.debug("Game found!")
             game_path = game_list_lines[i]
             game_id = game_list_lines[i+2][17:33]
             game_title = game_list_lines[i+3][14:]
-            games[game_id] = (NUSGame(game_id= game_id, game_title = game_title, path= game_path))
+            games[game_id] = (NUSGame(game_id=game_id, game_title=game_title, path=game_path))
         i = i + 23
-
+        #file_count = file_count + 1
+        #if file_count > 35:
+        #    return games
 
     # for game_path in games_path:
     #     game = probe_game(game_path)
@@ -335,8 +336,6 @@ def get_games(path):
     #                 games[game.game_id] = game
     #         else:
     #             games[game.game_id] = game
-
-    #logging.debug(games)
     return games
 
 
