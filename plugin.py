@@ -7,10 +7,10 @@ import logging
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-from os.path import join, abspath, isdir, dirname, realpath
+from os.path import join, abspath, isdir, dirname, realpath, exists, isfile
 from os import listdir, chdir, getcwd, environ
 from xml.etree import ElementTree as ET
-from os.path import exists
+from shutil import copy
 from time import sleep
 import re
 
@@ -39,11 +39,16 @@ class AuthenticationHandler(BaseHTTPRequestHandler):
             parse_result = urlparse(self.path)
             params = parse_qs(parse_result.query)
             global roms_path, emulator_path
-            roms_path = params['path'][0]
-            emulator_path = str(params['emulator_path'][0])
-            if emulator_path.endswith(".exe"):
-                emulator_path = re.sub(r'(?:.(?!\\))+$', "", emulator_path)
-
+            if 'path' in params:
+                roms_path = params['path'][0]
+            else:
+                logging.debug("Error: ROM path is missing!")
+            if 'emulator_path' in params:
+                emulator_path = str(params['emulator_path'][0])
+                if emulator_path.endswith(".exe"):
+                    emulator_path = re.sub(r'(?:.(?!\\))+$', "", emulator_path)
+            else:
+                emulator_path = join(environ['LOCALAPPDATA'], "yuzu\\yuzu-windows-msvc\\")
             self.wfile.write("<script>window.location=\"/end\";</script>".encode("utf8"))
             return
 
@@ -118,9 +123,9 @@ class AuthenticationHandler(BaseHTTPRequestHandler):
                     </div>
 
                     <div class="field">
-                      <label class="label has-text-light">Yuzu Location</label>
+                      <label class="label has-text-light">Yuzu Location [optional]</label>
                       <div class="control">
-                        <input class="input" name="emulator_path" type="text" class="has-text-light" placeholder="Enter absolute Yuzu path">
+                        <input class="input" name="emulator_path" type="text" class="has-text-light" placeholder="Enter absolute Yuzu path [optional]">
                       </div>
                     </div>
 
@@ -198,7 +203,7 @@ class YuzuPlugin(Plugin):
     #     self.update_game_time(GameTime(game.game_id, game_time[0] // 60, game_time[1]))
 
     def parse_games(self):
-        self.games = get_games(roms_path)
+        self.games = get_games()
         #self.game_times = get_game_times()
 
     async def shutdown(self):
@@ -255,7 +260,6 @@ class YuzuPlugin(Plugin):
             license_info = LicenseInfo(LicenseType.OtherUserLicense, None)
             owned_games.append(Game(game_id=game.game_id, game_title=game.game_title, dlcs=None,
                                     license_info=license_info))
-        #logging.debug(owned_games)
         return owned_games
 
     async def get_local_games(self):
@@ -278,47 +282,31 @@ class NUSGame:
     path: str
 
 
-# def probe_game(path):
-#     if exists(path + "/meta/meta.xml"):
-#         root = ET.parse(path + "/meta/meta.xml").getroot()
-#     else:
-#         return None
-#
-#     if root.find("product_code").text.startswith("WUP-M"):  # filter out dlc
-#         return None
-#     # Check if English title is valid
-#     title = root.find("longname_en").text
-#     if len(title) == 0:
-#         # logging.debug("No English title for" +  path + "- using Japanese")
-#         title = root.find("longname_ja").text
-#     game_id = root.find("title_id").text
-#     game_ver = int(root.find("title_version").text)
-#     # logging.debug(path + "=" + title + "(" +  game_id + ")")
-#     return NUSGame(game_id=game_id, game_title=title, path=path, game_ver=game_ver)
-
-
-# def get_game_folders(path):
-#     games_path = []
-#     for folder in listdir(path):
-#         if isdir(join(path, folder)):
-#             games_path.append(join(path, folder))
-#     return games_path
-
-
-def get_games(path):
+def get_games():
     games = {}
     dir_path = dirname(realpath(__file__))
-    chdir(join(dir_path, 'nxgameinfo'))
-    nxgameinfo_path = join(dir_path, 'nxgameinfo', 'nxgameinfo_cli.exe')
-    game_list_unstructured, stderr = subprocess.Popen([nxgameinfo_path, '-z', path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()
+    nxgameinfo_path = join(dir_path, 'nxgameinfo')
+    chdir(nxgameinfo_path)
+
+    # get required key files
+    if exists(join(emulator_path, "user\\")):
+        keys_path = join(emulator_path, "user\\keys\\")
+    else:
+        keys_path = join(environ['APPDATA'], "yuzu\\keys\\")
+    key_files = listdir(keys_path)
+    for key_file in key_files:
+        full_key_file_name = join(keys_path, key_file)
+        if isfile(full_key_file_name) :
+            copy(full_key_file_name, nxgameinfo_path)
+
+    nxgameinfo_exe_path = join(dir_path, 'nxgameinfo', 'nxgameinfo_cli.exe')
+    game_list_unstructured, stderr = subprocess.Popen([nxgameinfo_exe_path, '-z', roms_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()
     game_list_lines = game_list_unstructured.decode('cp437', 'backslashescape').splitlines()
-    #logging.debug(game_list_lines)
-    #logging.debug(len(game_list_lines))
-    i = 5
+
+    i = 5               # start in line 5
     #file_count = 1
     while i < len(game_list_lines)-21:
         if "Base" in game_list_lines[i+16] and len(game_list_lines[i+21]) < 10:      # Check if its a base game and if error line is empty
-            logging.debug("Game found!")
             game_path = game_list_lines[i]
             game_id = game_list_lines[i+2][17:33]
             game_title = game_list_lines[i+3][14:]
@@ -328,14 +316,6 @@ def get_games(path):
         #if file_count > 35:
         #    return games
 
-    # for game_path in games_path:
-    #     game = probe_game(game_path)
-    #     if game is not None:
-    #         if game.game_id in games:
-    #             if games[game.game_id].game_ver > game.game_ver:
-    #                 games[game.game_id] = game
-    #         else:
-    #             games[game.game_id] = game
     return games
 
 
