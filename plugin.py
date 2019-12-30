@@ -300,22 +300,17 @@ def get_games():
             copy(full_key_file_name, nxgameinfo_path)
 
     nxgameinfo_exe_path = join(dir_path, 'nxgameinfo', 'nxgameinfo_cli.exe')
-    game_list_unstructured, stderr = subprocess.Popen([nxgameinfo_exe_path, '-z', roms_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()
-    game_list_lines = game_list_unstructured.decode('cp437', 'backslashescape').splitlines()
+    game_list_unstructured = subprocess.run(["chcp", "65001", "|", nxgameinfo_exe_path, '-z', roms_path], shell=True, capture_output=True).stdout
+    game_list_lines = game_list_unstructured.decode().splitlines()
 
-    i = 5               # start in line 5
-    #file_count = 1
+    i = 4               # start in line 4
     while i < len(game_list_lines)-21:
-        if "Base" in game_list_lines[i+16] and len(game_list_lines[i+21]) < 10:      # Check if its a base game and if error line is empty
+        if "Base" in game_list_lines[i+16] and len(game_list_lines[i+21]) < 11:      # Check if its a base game and if error line is empty
             game_path = game_list_lines[i]
             game_id = game_list_lines[i+2][17:33]
             game_title = game_list_lines[i+3][14:]
             games[game_id] = (NUSGame(game_id=game_id, game_title=game_title, path=game_path))
         i = i + 23
-        #file_count = file_count + 1
-        #if file_count > 35:
-        #    return games
-
     return games
 
 

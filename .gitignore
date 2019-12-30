@@ -1,2 +1,4 @@
 
 *.pyc
+nxgameinfo/prod.keys
+nxgameinfo/title.keys
