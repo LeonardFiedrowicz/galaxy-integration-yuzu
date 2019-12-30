@@ -300,7 +300,7 @@ def get_games():
             copy(full_key_file_name, nxgameinfo_path)
 
     nxgameinfo_exe_path = join(dir_path, 'nxgameinfo', 'nxgameinfo_cli.exe')
-    game_list_unstructured = subprocess.run(["chcp", "65001", "|", nxgameinfo_exe_path, '-z', roms_path], shell=True, capture_output=True).stdout
+    game_list_unstructured = subprocess.run([nxgameinfo_exe_path, '-z', roms_path], shell=True, capture_output=True).stdout
     game_list_lines = game_list_unstructured.decode().splitlines()
 
     i = 4               # start in line 4
