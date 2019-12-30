@@ -4,6 +4,7 @@ Requires Yuzu to be installed. This implementation is a modification of the [Cit
 
 Requires a `prod.keys` file either in `[path-to-yuzu]\yuzu\yuzu-windows-msvc\user\keys\` or at `%APPDATA%\yuzu\keys` to decode games files (if you've used yuzu before you should already have these).
 
+If you leave the path to yuzu blank it takes the default location at `%LOCALAPPDATA%\yuzu\`.
 Doesn't track game time yet.
 
 ## Features
@@ -14,8 +15,8 @@ Doesn't track game time yet.
 ## Installation
 
 Download the latest release and extract it to:
-- (WINDOWS) `%localappdata%\GOG.com\Galaxy\plugins\installed\galaxy-integration-yuzu`
-- (MACOS) `~/Library/Application Support/GOG.com/Galaxy/plugins/installed/galaxy-integration-yuzu`
+- `%localappdata%\GOG.com\Galaxy\plugins\installed\galaxy-integration-yuzu`
+
 
 i.e 
 `C:\Users\Leonard\AppData\Local\GOG.com\Galaxy\plugins\installed\galaxy-integration-yuzu`
