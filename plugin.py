@@ -211,14 +211,16 @@ class YuzuPlugin(Plugin):
 
     async def launch_game(self, game_id):
         game = self.games[game_id]
-        logging.debug("Launching game " + game.game_id)
+        logging.debug("Launching game " + game.game_title + game.game_id)
         self.launch_Yuzu_game(game)
-
         #       if game_id not in self.running_games:
         #           self.running_games.append(game_id)
         return
 
+
     def finish_login(self):
+        logging.debug("ROMs Path: " + roms_path)
+        logging.debug("Yuzu Path: " + emulator_path)
         some_dict = dict()
         some_dict["roms_path"] = roms_path
         some_dict["emulator_path"] = emulator_path
@@ -293,6 +295,7 @@ def get_games():
         keys_path = join(emulator_path, "user\\keys\\")
     else:
         keys_path = join(environ['APPDATA'], "yuzu\\keys\\")
+    logging.debug("Keys Path: " + keys_path)
     key_files = listdir(keys_path)
     for key_file in key_files:
         full_key_file_name = join(keys_path, key_file)
@@ -300,8 +303,11 @@ def get_games():
             copy(full_key_file_name, nxgameinfo_path)
 
     nxgameinfo_exe_path = join(dir_path, 'nxgameinfo', 'nxgameinfo_cli.exe')
+    logging.debug("NX_Game_Info.exe Path: " + nxgameinfo_exe_path)
     game_list_unstructured = subprocess.run([nxgameinfo_exe_path, '-z', roms_path], shell=True, capture_output=True).stdout
+    logging.debug("Decoding NX_Game_Info Output...")
     game_list_lines = game_list_unstructured.decode().splitlines()
+    logging.debug("Decoded NX_Game_Info Output.")
 
     i = 4               # start in line 4
     while i < len(game_list_lines)-21:
