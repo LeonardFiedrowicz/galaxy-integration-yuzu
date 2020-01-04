@@ -179,7 +179,11 @@ class YuzuPlugin(Plugin):
     def launch_Yuzu_game(self, game):
         def in_thread(_self, _game):
             chdir(emulator_path)
-            logging.debug("Launching game: \n\t\tYuzu Path: " + abspath("./Yuzu.exe") + "\n\t\tGame Path: " + _game.path)
+            logging.debug(
+                "Launching game: \n\t\tYuzu Path: "
+                + abspath("./Yuzu.exe")
+                + "\n\t\tGame Path: "
+                + _game.path)
             proc = subprocess.Popen(["./Yuzu.exe", _game.path])
             _self.game_running = True
             _self.running_game = _game.game_id
@@ -318,6 +322,9 @@ def get_games():
             game_title = game_list_lines[i+3][14:]
             games[game_id] = (NUSGame(game_id=game_id, game_title=game_title, path=game_path))
         i = i + 23
+
+    for line in game_list_lines:
+        logging.debug(line)
     return games
 
 
