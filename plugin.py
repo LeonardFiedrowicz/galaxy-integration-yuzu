@@ -316,7 +316,7 @@ def get_games():
 
     i = 4               # start in line 4
     while i < len(game_list_lines)-21:
-        if "Base" in game_list_lines[i+16] and len(game_list_lines[i+21]) < 11:      # Check if its a base game and if error line is empty
+        if len(game_list_lines[i+21]) < 11: # Check if its a base game and if error line is empty      # Check if its a base game and if error line is empty
             game_path = game_list_lines[i]
             game_id = game_list_lines[i+2][17:33]
             game_title = game_list_lines[i+3][14:]
