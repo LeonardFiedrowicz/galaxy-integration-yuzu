@@ -314,16 +314,27 @@ def get_games():
     game_list_lines = game_list_unstructured.decode().splitlines()
     logging.debug("Decoded NX_Game_Info Output.")
 
-    i = 4  # start in line 4
-    while i < len(game_list_lines) - 21:
-        if (
-            len(game_list_lines[i + 21]) < 11
-        ):  # Check if its a base game and if error line is empty      # Check if its a base game and if error line is empty
-            game_path = game_list_lines[i]
-            game_id = game_list_lines[i + 2][17:33]
-            game_title = game_list_lines[i + 3][14:]
-            games[game_id] = NUSGame(game_id=game_id, game_title=game_title, path=game_path)
-        i = i + 23
+    game_list_lines = game_list_lines[4:]  # slicing the game list to remove unrelated output
+    game_list_lines = list(filter(None, game_list_lines))  # removing empty lines
+
+    i = 0
+    while i < len(game_list_lines):
+        # Removed error check entirely, as there may be some files with mismatched Title Keys. (personal experience) They work, but are still errored.
+        # if len(game_list_lines[i + 21]) < 10 or game_list_lines[i + 18][13:] == "Converted": # Check if if error line is empty and game wasn't converted from XCI.
+        game_path = game_list_lines[i]
+        game_id = game_list_lines[i + 2][17:]
+        game_title = game_list_lines[i + 3][14:]
+
+        # Add title for some dumps with missing info (title name, display version, title key, publisher and languages)
+        if game_title == "":
+            game_title = re.findall(r"\\((?:[A-z]|\d|\s)*).nsp", game_path)[0]
+        # This game isn't working, and I couldn't find a workaround. There are two entries with the same name, it gets recognized as the GB version.
+        # elif game_title == "The Legend of Zelda: Link's Awakening":
+        #     print("Help")
+
+        games[game_id] = NUSGame(game_id=game_id, game_title=game_title, path=game_path)
+
+        i += 22
 
     for line in game_list_lines:
         logging.debug(line)
