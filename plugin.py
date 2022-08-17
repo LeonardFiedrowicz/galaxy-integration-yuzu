@@ -28,9 +28,9 @@ emulator_path = ""
 
 
 class AuthenticationHandler(BaseHTTPRequestHandler):
-    def _set_headers(self, content_type='text/html'):
+    def _set_headers(self, content_type="text/html"):
         self.send_response(200)
-        self.send_header('Content-type', content_type)
+        self.send_header("Content-type", content_type)
         self.end_headers()
 
     def do_GET(self):
@@ -39,26 +39,27 @@ class AuthenticationHandler(BaseHTTPRequestHandler):
             parse_result = urlparse(self.path)
             params = parse_qs(parse_result.query)
             global roms_path, emulator_path
-            if 'path' in params:
-                roms_path = params['path'][0]
+            if "path" in params:
+                roms_path = params["path"][0]
             else:
                 logging.debug("Error: ROM path is missing!")
-            if 'emulator_path' in params:
-                emulator_path = str(params['emulator_path'][0])
+            if "emulator_path" in params:
+                emulator_path = str(params["emulator_path"][0])
                 if emulator_path.endswith(".exe"):
-                    emulator_path = re.sub(r'(?:.(?!\\))+$', "", emulator_path)
+                    emulator_path = re.sub(r"(?:.(?!\\))+$", "", emulator_path)
             else:
-                emulator_path = join(environ['LOCALAPPDATA'], "yuzu\\yuzu-windows-msvc\\")
-            self.wfile.write("<script>window.location=\"/end\";</script>".encode("utf8"))
+                emulator_path = join(environ["LOCALAPPDATA"], "yuzu\\yuzu-windows-msvc\\")
+            self.wfile.write('<script>window.location="/end";</script>'.encode("utf8"))
             return
 
         self._set_headers()
-        self.wfile.write("""
+        self.wfile.write(
+            """
         <!DOCTYPE html>
         <html>
         <head>
             <title>Yuzu Integration</title>
-            <link href="https://fonts.googleapis.com/css?family=Lato:300&display=swap" rel="stylesheet"> 
+            <link href="https://fonts.googleapis.com/css?family=Lato:300&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.min.css" integrity="sha256-vK3UTo/8wHbaUn+dTQD0X6dzidqc5l7gczvH+Bnowwk=" crossorigin="anonymous" />
             <style>
                 @charset "UTF-8";
@@ -138,14 +139,17 @@ class AuthenticationHandler(BaseHTTPRequestHandler):
             </div>
         </body>
         </html>
-        """.encode('utf8'))
+        """.encode(
+                "utf8"
+            )
+        )
 
 
 class AuthenticationServer(threading.Thread):
     def __init__(self, port=0):
         super().__init__()
         self.path = ""
-        server_address = ('localhost', port)
+        server_address = ("localhost", port)
         self.httpd = HTTPServer(server_address, AuthenticationHandler)  # partial(AuthenticationHandler, self))
         self.port = self.httpd.server_port
 
@@ -156,11 +160,7 @@ class AuthenticationServer(threading.Thread):
 class YuzuPlugin(Plugin):
     def __init__(self, reader, writer, token):
         super().__init__(
-            Platform.NintendoSwitch,  # Choose platform from available list
-            "0.2",  # Version
-            reader,
-            writer,
-            token
+            Platform.NintendoSwitch, "0.2", reader, writer, token  # Choose platform from available list  # Version
         )
         self.game_running = False
         self.running_game = None
@@ -180,10 +180,8 @@ class YuzuPlugin(Plugin):
         def in_thread(_self, _game):
             chdir(emulator_path)
             logging.debug(
-                "Launching game: \n\t\tYuzu Path: "
-                + abspath("./Yuzu.exe")
-                + "\n\t\tGame Path: "
-                + _game.path)
+                "Launching game: \n\t\tYuzu Path: " + abspath("./Yuzu.exe") + "\n\t\tGame Path: " + _game.path
+            )
             proc = subprocess.Popen(["./Yuzu.exe", _game.path])
             _self.game_running = True
             _self.running_game = _game.game_id
@@ -209,7 +207,7 @@ class YuzuPlugin(Plugin):
 
     def parse_games(self):
         self.games = get_games()
-        #self.game_times = get_game_times()
+        # self.game_times = get_game_times()
 
     async def shutdown(self):
         self.server.httpd.shutdown()
@@ -221,7 +219,6 @@ class YuzuPlugin(Plugin):
         #       if game_id not in self.running_games:
         #           self.running_games.append(game_id)
         return
-
 
     def finish_login(self):
         logging.debug("ROMs Path: " + roms_path)
@@ -252,7 +249,7 @@ class YuzuPlugin(Plugin):
                 "window_width": 400,
                 "window_height": 300,
                 "start_uri": "http://localhost:" + str(self.server.port),
-                "end_uri_regex": ".*/end.*"
+                "end_uri_regex": ".*/end.*",
             }
             return NextStep("web_session", params)
 
@@ -265,8 +262,9 @@ class YuzuPlugin(Plugin):
         owned_games = []
         for game in self.games.values():
             license_info = LicenseInfo(LicenseType.OtherUserLicense, None)
-            owned_games.append(Game(game_id=game.game_id, game_title=game.game_title, dlcs=None,
-                                    license_info=license_info))
+            owned_games.append(
+                Game(game_id=game.game_id, game_title=game.game_title, dlcs=None, license_info=license_info)
+            )
         return owned_games
 
     async def get_local_games(self):
@@ -292,36 +290,51 @@ class NUSGame:
 def get_games():
     games = {}
     dir_path = dirname(realpath(__file__))
-    nxgameinfo_path = join(dir_path, 'nxgameinfo')
+    nxgameinfo_path = join(dir_path, "nxgameinfo")
     chdir(nxgameinfo_path)
 
     # get required key files
     if exists(join(emulator_path, "user\\")):
         keys_path = join(emulator_path, "user\\keys\\")
     else:
-        keys_path = join(environ['APPDATA'], "yuzu\\keys\\")
+        keys_path = join(environ["APPDATA"], "yuzu\\keys\\")
     logging.debug("Keys Path: " + keys_path)
     key_files = listdir(keys_path)
     for key_file in key_files:
         full_key_file_name = join(keys_path, key_file)
-        if isfile(full_key_file_name) :
+        if isfile(full_key_file_name):
             copy(full_key_file_name, nxgameinfo_path)
 
-    nxgameinfo_exe_path = join(dir_path, 'nxgameinfo', 'nxgameinfo_cli.exe')
+    nxgameinfo_exe_path = join(dir_path, "nxgameinfo", "nxgameinfo_cli.exe")
     logging.debug("NX_Game_Info.exe Path: " + nxgameinfo_exe_path)
-    game_list_unstructured = subprocess.run([nxgameinfo_exe_path, '-z', roms_path], shell=True, capture_output=True).stdout
+    game_list_unstructured = subprocess.run(
+        [nxgameinfo_exe_path, "-z", roms_path], shell=True, capture_output=True
+    ).stdout
     logging.debug("Decoding NX_Game_Info Output...")
     game_list_lines = game_list_unstructured.decode().splitlines()
     logging.debug("Decoded NX_Game_Info Output.")
 
-    i = 4               # start in line 4
-    while i < len(game_list_lines)-21:
-        if len(game_list_lines[i+21]) < 11: # Check if its a base game and if error line is empty      # Check if its a base game and if error line is empty
-            game_path = game_list_lines[i]
-            game_id = game_list_lines[i+2][17:33]
-            game_title = game_list_lines[i+3][14:]
-            games[game_id] = (NUSGame(game_id=game_id, game_title=game_title, path=game_path))
-        i = i + 23
+    game_list_lines = game_list_lines[4:]  # slicing the game list to remove unrelated output
+    game_list_lines = list(filter(None, game_list_lines))  # removing empty lines
+
+    i = 0
+    while i < len(game_list_lines):
+        # Removed error check entirely, as there may be some files with mismatched Title Keys. (personal experience) They work, but are still errored.
+        # if len(game_list_lines[i + 21]) < 10 or game_list_lines[i + 18][13:] == "Converted": # Check if if error line is empty and game wasn't converted from XCI.
+        game_path = game_list_lines[i]
+        game_id = game_list_lines[i + 2][17:]
+        game_title = game_list_lines[i + 3][14:]
+
+        # Add title for some dumps with missing info (title name, display version, title key, publisher and languages)
+        if game_title == "":
+            game_title = re.findall(r"\\((?:[A-z]|\d|\s)*).nsp", game_path)[0]
+        # This game isn't working, and I couldn't find a workaround. There are two entries with the same name, it gets recognized as the GB version.
+        # elif game_title == "The Legend of Zelda: Link's Awakening":
+        #     print("Help")
+
+        games[game_id] = NUSGame(game_id=game_id, game_title=game_title, path=game_path)
+
+        i += 22
 
     for line in game_list_lines:
         logging.debug(line)
